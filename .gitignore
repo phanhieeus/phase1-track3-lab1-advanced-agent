@@ -9,3 +9,6 @@ env/
 .pytest_cache/
 outputs/
 .DS_Store
+
+# Raw HotpotQA source (45MB, tải lại từ hotpotqa.github.io) — chỉ commit bản đã sample
+data/hotpot_dev_distractor_v1.json

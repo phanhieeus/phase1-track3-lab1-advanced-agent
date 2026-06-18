@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Literal, Optional, TypedDict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class ContextChunk(BaseModel):
     title: str
@@ -14,12 +14,28 @@ class QAExample(BaseModel):
     context: list[ContextChunk]
 
 class JudgeResult(BaseModel):
-    # TODO: Học viên định nghĩa các trường cần thiết cho kết quả đánh giá (score, reason, ...)
-    pass
+    # Phương án B: nhị phân + validated, robust với JSON từ LLM (xem docs mục 4.1.1)
+    model_config = ConfigDict(extra="ignore")
+    score: Literal[0, 1]                                       # đường đúng/sai → required
+    reason: str                                               # nguồn cho ReflectionEntry.failure_reason → required
+    missing_evidence: list[str] = Field(default_factory=list)  # mock bỏ qua khi score=1 → phải có default
+    spurious_claims: list[str] = Field(default_factory=list)
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 class ReflectionEntry(BaseModel):
-    # TODO: Học viên định nghĩa các trường cần thiết cho một mục reflection (attempt_id, lesson, strategy, ...)
-    pass
+    # Phương án B: next_strategy là field then chốt (required); field mô tả fail-safe (default)
+    model_config = ConfigDict(extra="ignore")
+    attempt_id: int
+    next_strategy: str                                        # được append vào reflection_memory → required
+    failure_reason: str = ""                                  # mô tả cho report → fail-safe
+    lesson: str = ""
+
+class Usage(BaseModel):
+    # Số liệu thật trả về từ một lời gọi LLM (mock sinh giá trị giả lập tương đương).
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    latency_ms: int = 0
 
 class AttemptTrace(BaseModel):
     attempt_id: int
